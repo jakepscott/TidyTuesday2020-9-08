@@ -13,16 +13,14 @@ friends <- tuesdata$friends
 friends_info <- tuesdata$friends_info
 friends_emotions <- tuesdata$friends_emotions
 
-friends_emotions %>% count(season,emotion)
-friends %>% count(season,speaker)
-
 # Prepping Data -----------------------------------------------------------
 full_data <- friends_emotions %>% left_join(friends)
 
 character_emotions <- full_data %>% filter(speaker %in% c("Ross Geller","Joey Tribbiani","Chandler Bing",
                                                           "Rachel Green","Phoebe Buffay", "Monica Geller")) %>% 
   count(speaker,emotion) %>% group_by(speaker) %>% mutate(total=sum(n)) %>% ungroup() %>% 
-  mutate(percent=n/total*100) 
+  mutate(percent=n/total*100) %>% 
+  separate(col = "speaker", sep = " ", into=c("Speaker","lastname")) %>% select(-lastname)
 
 (chars <- character_emotions %>% select(-n) %>% 
     pivot_wider(names_from = "emotion", values_from=c("percent")))
@@ -82,8 +80,8 @@ new_table <- tibble("speaker"=table_data$speaker, "Joyful"=diff_func("Joyful"),
 new_table <- rbind(table_data[1,] %>% select(-total) %>% mutate(across(where(is.numeric),round,2)) %>% 
                      mutate(across(where(is.numeric),paste0,"%")),new_table)
 
-(New_table <- cbind(new_table,table_data$total) %>% rename("Utterances"=`table_data$total`) %>% 
-    relocate(`Utterances`,.before="Joyful"))
+(New_table <- cbind(new_table,table_data$total) %>% rename("Lines"=`table_data$total`) %>% 
+    relocate(`Lines`,.before="Joyful"))
 
 
 #Parameters for table
@@ -93,10 +91,10 @@ outlier <- c(joy_diff,Mad_diff,Neutral_diff,Peaceful_diff,Power_diff,Sad_diff,Sc
 
 outlier <- 1
 
-New_table %>% arrange(desc(`Utterances`)) %>% 
+(gttable <- New_table %>% arrange(desc(`Lines`)) %>% 
   gt() %>%  
-  tab_spanner(label = "Difference Between the Mood of the Show and the Mood of the Characters",
-              columns = 3:9) %>% 
+  tab_header(title = md("**The One Where Rachel is Mad and Phoebe is Sad**"),
+             subtitle = html("<em>Difference between the share of lines spoken by a given character in a given category and the share of overall lines in that category<em>")) %>% 
   cols_label(speaker="") %>% 
   cols_align(align = "right",
              columns = 3:9) %>% 
@@ -108,13 +106,6 @@ New_table %>% arrange(desc(`Utterances`)) %>%
                 align = "right")
     ),
     locations = cells_column_labels(everything())
-  ) %>% 
-  tab_style(
-    style = cell_text(weight = "bold",
-                      size = "large",
-                      align = "left"),
-    locations = list(
-      cells_column_spanners(everything()))
   ) %>% 
   tab_style(
     style = list(
@@ -141,7 +132,7 @@ New_table %>% arrange(desc(`Utterances`)) %>%
     ),
     locations = list(
       cells_body(
-        columns = "Utterances")
+        columns = "Lines")
     )
   ) %>% 
   tab_options(
@@ -150,14 +141,8 @@ New_table %>% arrange(desc(`Utterances`)) %>%
     column_labels.border.bottom.color = "black",
     table_body.hlines.color = "white",
     table.border.bottom.color = "white",
-    table.border.bottom.width = px(3)
-  ) %>% 
-  tab_footnote(
-    footnote = "Difference between share of utterances by Chandler in the joyful category and the share of all utterances that were joyful",
-    locations = cells_body(
-      columns = 3,
-      rows = 2
-    )
+    table.border.bottom.width = px(3),
+    heading.align = "left"
   ) %>% 
   tab_footnote(
     footnote = "Grey highlight indicates a difference greater than 1 percentage point",
@@ -332,4 +317,6 @@ tab_style(
     )
   ))  %>% 
   tab_source_note(md("**Table**: @jakepscott2020 | **Data**: Friends Package"))
+)
 
+gtsave(gttable,"pngs/Friends_Mood_Table.png")
