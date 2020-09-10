@@ -20,7 +20,7 @@ character_emotions <- full_data %>% filter(speaker %in% c("Ross Geller","Joey Tr
                                                           "Rachel Green","Phoebe Buffay", "Monica Geller")) %>% 
   count(speaker,emotion) %>% group_by(speaker) %>% mutate(total=sum(n)) %>% ungroup() %>% 
   mutate(percent=n/total*100) %>% 
-  separate(col = "speaker", sep = " ", into=c("Speaker","lastname")) %>% select(-lastname)
+  separate(col = "speaker", sep = " ", into=c("speaker","lastname")) %>% select(-lastname)
 
 (chars <- character_emotions %>% select(-n) %>% 
     pivot_wider(names_from = "emotion", values_from=c("percent")))
