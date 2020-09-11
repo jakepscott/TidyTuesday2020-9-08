@@ -16,6 +16,10 @@ friends <- tuesdata$friends
 friends_info <- tuesdata$friends_info
 friends_emotions <- tuesdata$friends_emotions
 
+
+full_data <- friends_emotions %>% left_join(friends)
+
+
 graph_data <- full_data %>% filter(speaker %in% c("Ross Geller","Joey Tribbiani","Chandler Bing",
                                                           "Rachel Green","Phoebe Buffay", "Monica Geller")) %>% 
   count(season, speaker,emotion,na.rm=T) %>% group_by(season, speaker) %>% mutate(total=sum(n)) %>% ungroup() %>% 
